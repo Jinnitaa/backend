@@ -462,3 +462,9 @@ app.post("/createDealer", upload.none(), (req, res) => {
 
     console.log(req.body);
 });
+
+app.get('/admin/dealer', (req, res) => {
+    DealerModel.find({})
+        .then(dealer => res.json(dealer))
+        .catch(err => res.json(err));
+});

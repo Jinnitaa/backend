@@ -9,6 +9,7 @@ const NewsModel = require('./models/News');
 const CareerModel = require('./models/Career');
 const FittingModel = require('./models/Fitting');
 const DealerModel = require('./models/Dealer');
+const MessageModel = require('./models/Message');
 const multer = require('multer');
 const fs = require('fs');
 const express = require('express');
@@ -477,6 +478,44 @@ app.delete('/admin/dealer/deleteDealer/:id', async (req, res) => {
     try {
         // Delete the career from MongoDB
         const result = await DealerModel.findByIdAndDelete({ _id: id });
+
+        res.json(result);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
+////////////////////////////////Message/////////////////////////////////////////
+
+app.post("/createMessage", upload.none(), (req, res) => {
+    const { name, email, number, message } = req.body;
+
+    MessageModel.create({
+        name,
+        email,
+        number,
+        message,
+    })
+    .then(message => res.json(message))
+    .catch(err => res.json(err));
+
+    console.log(req.body);
+});
+
+app.get('/admin/messages', (req, res) => {
+    MessageModel.find({})
+        .then(messages => res.json(messages))
+        .catch(err => res.json(err));
+});
+
+// delete route
+app.delete('/admin/message/deleteMessage/:id', async (req, res) => {
+    const id = req.params.id;
+
+    try {
+        // Delete the message from MongoDB
+        const result = await MessageModel.findByIdAndDelete({ _id: id });
 
         res.json(result);
     } catch (err) {

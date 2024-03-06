@@ -471,7 +471,7 @@ app.get('/admin/dealer', (req, res) => {
 
 
 // delete route
-app.delete('/admin/dealer/deleteCareer/:id', async (req, res) => {
+app.delete('/admin/dealer/deleteDealer/:id', async (req, res) => {
     const id = req.params.id;
 
     try {

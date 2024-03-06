@@ -30,7 +30,7 @@ const DealerSchema = new mongoose.Schema({
   },
 });
 
-const DealerModel = mongoose.model('Dealer', DealerSchema);
+const DealerModel = mongoose.model('dealer', DealerSchema);
 
 module.exports = DealerModel;
 

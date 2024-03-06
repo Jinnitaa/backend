@@ -17,7 +17,7 @@ const path = require('path');
 const app = express();
 app.use(cors());
 app.use(express.json());
-const mongoURI = process.env.MONGO_URI;
+
 
 // Attempt to connect to the MongoDB database
 try {
@@ -440,4 +440,24 @@ app.delete('/admin/fitting/deleteFitting/:id', async (req, res) => {
         console.error(err);
         res.status(500).json({ error: "Internal Server Error" });
     }
+});
+
+///////////////////////////////////Dealer////////////////////////////////////////////
+
+//create dealer 
+
+app.post("/createDealer", upload.none(), (req, res) => {
+    const { name, mobile, email, role, products, province } = req.body;
+
+    DealerModel.create({
+        name,
+        mobile,
+        email,
+        role,
+        products,
+        province,
+    })
+    .then(career => res.json(career))
+    .catch(err => res.json(err));
+    console.log(req.body);
 });

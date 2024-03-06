@@ -457,7 +457,8 @@ app.post("/createDealer", upload.none(), (req, res) => {
         products,
         province,
     })
-    .then(career => res.json(career))
+    .then(dealer => res.json(dealer))
     .catch(err => res.json(err));
+
     console.log(req.body);
 });

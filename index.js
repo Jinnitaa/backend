@@ -468,3 +468,19 @@ app.get('/admin/dealer', (req, res) => {
         .then(dealer => res.json(dealer))
         .catch(err => res.json(err));
 });
+
+
+// delete route
+app.delete('/admin/dealer/deleteCareer/:id', async (req, res) => {
+    const id = req.params.id;
+
+    try {
+        // Delete the career from MongoDB
+        const result = await DealerModel.findByIdAndDelete({ _id: id });
+
+        res.json(result);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});

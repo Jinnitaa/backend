@@ -8,6 +8,7 @@ const EmployeeModel = require('./models/Employee');
 const NewsModel = require('./models/News');
 const CareerModel = require('./models/Career');
 const FittingModel = require('./models/Fitting');
+const DealerModel = require('./models/Dealer');
 const multer = require('multer');
 const fs = require('fs');
 const express = require('express');

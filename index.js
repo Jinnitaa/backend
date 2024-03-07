@@ -522,3 +522,59 @@ app.delete('/admin/message/deleteMessage/:id', async (req, res) => {
         res.status(500).json({ error: "Internal Server Error" });
     }
 });
+
+///////////////////////////////Resource/////////////////////////////////////////////////
+
+app.post("/createResource", upload.single('file'), (req, res) => {
+    try {
+        const { title} = req.body;
+        const filePath = req.file ? req.file.filename : null;
+
+        ResourceModel.create({ title , filename: req.file.originalname, path: filePath })
+            .then(resource => res.json(resource))
+            .catch(err => res.json(err));
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
+app.get('/admin/resources', (req, res) => {
+    ResourceModel.find({})
+        .then(resources => res.json(resources))
+        .catch(err => res.json(err));
+});
+
+app.get('/admin/fitting/getResource/:id', (req, res) => {
+    const id = req.params.id;
+
+    ResourceModel.findById({ _id: id })
+        .then(resource => {
+            const filePath = `./uploads/${resource.path}`;
+            res.sendFile(filePath);
+        })
+        .catch(err => res.json(err));
+});
+
+app.delete('/admin/resource/deleteResource/:id', async (req, res) => {
+    const id = req.params.id;
+
+    try {
+        // Find the resource to be deleted
+        const resource = await ResourceModel.findById({ _id: id });
+
+        // Delete the file associated with the resource
+        if (resource.path) {
+            const filePath = `./uploads/${resource.path}`;
+            fs.unlinkSync(filePath);
+        }
+
+        // Delete the resource from MongoDB
+        const result = await ResourceModel.findByIdAndDelete({ _id: id });
+
+        res.json(result);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});

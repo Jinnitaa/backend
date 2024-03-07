@@ -527,10 +527,10 @@ app.delete('/admin/message/deleteMessage/:id', async (req, res) => {
 
 app.post("/createResource", upload.single('file'), (req, res) => {
     try {
-        const { tile } = req.body;
+        const { title } = req.body; // Change from tile to title
         const filePath = req.file ? req.file.filename : null;
 
-        FittingModel.create({ title, file: filePath })
+        ResourceModel.create({ title, file: filePath }) // Change from FittingModel to ResourceModel
             .then(resource => res.json(resource))
             .catch(err => res.json(err));
     } catch (error) {
@@ -552,7 +552,7 @@ app.get('/admin/resource/getResource/:id', (req, res) => {
 
     ResourceModel.findById({ _id: id })
         .then(resource => {
-            const filePath = `./uploads/${resource.path}`;
+            const filePath = `./uploads/${resource.file}`; // Change from resource.path to resource.file
             res.sendFile(filePath);
         })
         .catch(err => res.json(err));
@@ -567,8 +567,8 @@ app.delete('/admin/resource/deleteResource/:id', async (req, res) => {
         const resource = await ResourceModel.findById({ _id: id });
 
         // Delete the file associated with the resource
-        if (resource.path) {
-            const filePath = `./uploads/${resource.path}`;
+        if (resource.file) {
+            const filePath = `./uploads/${resource.file}`; // Change from resource.path to resource.file
             fs.unlinkSync(filePath);
         }
 

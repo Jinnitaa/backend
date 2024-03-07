@@ -527,10 +527,10 @@ app.delete('/admin/message/deleteMessage/:id', async (req, res) => {
 
 app.post("/createResource", upload.single('file'), (req, res) => {
     try {
-        const { title} = req.body;
+        const { title } = req.body;
         const filePath = req.file ? req.file.filename : null;
 
-        ResourceModel.create({ title , filename: req.file.originalname, path: filePath })
+        ResourceModel.create({ title, filename: req.file.originalname, path: filePath })
             .then(resource => res.json(resource))
             .catch(err => res.json(err));
     } catch (error) {
@@ -539,13 +539,15 @@ app.post("/createResource", upload.single('file'), (req, res) => {
     }
 });
 
+// Get All Resources
 app.get('/admin/resources', (req, res) => {
     ResourceModel.find({})
         .then(resources => res.json(resources))
         .catch(err => res.json(err));
 });
 
-app.get('/admin/fitting/getResource/:id', (req, res) => {
+// Get Resource by ID and Serve File
+app.get('/admin/resource/getResource/:id', (req, res) => {
     const id = req.params.id;
 
     ResourceModel.findById({ _id: id })
@@ -556,6 +558,7 @@ app.get('/admin/fitting/getResource/:id', (req, res) => {
         .catch(err => res.json(err));
 });
 
+// Delete Resource
 app.delete('/admin/resource/deleteResource/:id', async (req, res) => {
     const id = req.params.id;
 

@@ -2,8 +2,8 @@
 const mongoose=require('mongoose')
 const ResourceSchema = new mongoose.Schema({
     title: String,
-    filename: String,
-    path: String,
+    file: String,
+    
   });
 
 const ResourceModel=mongoose.model("resource", ResourceSchema)

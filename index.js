@@ -527,10 +527,10 @@ app.delete('/admin/message/deleteMessage/:id', async (req, res) => {
 
 app.post("/createResource", upload.single('file'), (req, res) => {
     try {
-        const { title } = req.body;
+        const { tile } = req.body;
         const filePath = req.file ? req.file.filename : null;
 
-        ResourceModel.create({ title, filename: req.file.originalname, path: filePath })
+        FittingModel.create({ title, file: filePath })
             .then(resource => res.json(resource))
             .catch(err => res.json(err));
     } catch (error) {

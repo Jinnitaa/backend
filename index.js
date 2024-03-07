@@ -1,6 +1,4 @@
 
-
-
 require('dotenv').config();
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -10,6 +8,7 @@ const CareerModel = require('./models/Career');
 const FittingModel = require('./models/Fitting');
 const DealerModel = require('./models/Dealer');
 const MessageModel = require('./models/Message');
+const ResourceModel = require('./models/Message');
 const multer = require('multer');
 const fs = require('fs');
 const express = require('express');

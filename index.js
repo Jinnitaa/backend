@@ -588,9 +588,9 @@ app.delete('/admin/resource/deleteResource/:id', async (req, res) => {
 ////////////////////////////////////Video///////////////////////////////////////////////////
 app.post("/createVideo", (req, res) => {
     try {
-        const { title, link } = req.body;
+        const { title, link, description } = req.body;
 
-        VideoModel.create({ title, link })
+        VideoModel.create({ title, link, description })
             .then(video => res.json(video))
             .catch(err => res.json(err));
     } catch (error) {

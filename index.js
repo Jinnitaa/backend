@@ -9,6 +9,9 @@ const FittingModel = require('./models/Fitting');
 const DealerModel = require('./models/Dealer');
 const MessageModel = require('./models/Message');
 const ResourceModel = require('./models/Resource');
+const VideoModel = require('./models/Video');
+
+
 const multer = require('multer');
 const fs = require('fs');
 const express = require('express');
@@ -574,6 +577,50 @@ app.delete('/admin/resource/deleteResource/:id', async (req, res) => {
 
         // Delete the resource from MongoDB
         const result = await ResourceModel.findByIdAndDelete({ _id: id });
+
+        res.json(result);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
+////////////////////////////////////Video///////////////////////////////////////////////////
+app.post("/createVideo", (req, res) => {
+    try {
+        const { title, link } = req.body;
+
+        VideoModel.create({ title, link })
+            .then(video => res.json(video))
+            .catch(err => res.json(err));
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
+// Get All Videos
+app.get('/admin/videos', (req, res) => {
+    VideoModel.find({})
+        .then(videos => res.json(videos))
+        .catch(err => res.json(err));
+});
+
+// Get Video by ID
+app.get('/admin/video/getVideo/:id', (req, res) => {
+    const id = req.params.id;
+
+    VideoModel.findById({ _id: id })
+        .then(video => res.json(video))
+        .catch(err => res.json(err));
+});
+
+// Delete Video
+app.delete('/admin/video/deleteVideo/:id', async (req, res) => {
+    const id = req.params.id;
+
+    try {
+        const result = await VideoModel.findByIdAndDelete({ _id: id });
 
         res.json(result);
     } catch (err) {

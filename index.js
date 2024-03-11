@@ -628,3 +628,31 @@ app.delete('/admin/video/deleteVideo/:id', async (req, res) => {
         res.status(500).json({ error: "Internal Server Error" });
     }
 });
+
+app.put('/updateVideo/:id', async (req, res) => {
+    try {
+        const id = req.params.id;
+        const { title, description, link } = req.body;
+
+        // Find the video to be updated
+        const video = await VideoModel.findById({ _id: id });
+
+        // Update video information
+        const updateData = {
+            title,
+            description,
+            link
+        };
+
+        const updatedVideo = await VideoModel.findByIdAndUpdate(
+            { _id: id },
+            updateData,
+            { new: true } // Return the updated video
+        );
+
+        res.json(updatedVideo);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});

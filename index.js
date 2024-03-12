@@ -660,7 +660,7 @@ app.put('/updateVideo/:id', async (req, res) => {
 });
 
 ////////////////////////////////Admin Login /////////////////////////////////////////////
-app.post('login', async (req, res) => {
+app.post('/login', async (req, res) => {
     const { username, password } = req.body;
   
     try {

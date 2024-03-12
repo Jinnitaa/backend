@@ -260,9 +260,7 @@ app.delete('/admin/news/deleteNews/:id', async (req, res) => {
 });
 
 
-app.listen(3002, () => {
-    console.log("Server is Running");
-});
+
 
 //////////////////////////////////////////////Career///////////////////////////////////////////////////////////////
 
@@ -662,32 +660,30 @@ app.put('/updateVideo/:id', async (req, res) => {
 ////////////////////////////////Admin Login /////////////////////////////////////////////
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
-  
+
     try {
-      // Find the admin by username
-      const admin = await Admin.findOne({ username });
-  
-      if (!admin) {
-        return res.status(401).json({ error: 'Invalid credentials' });
-      }
-  
-      // Compare the provided password with the hashed password in the database
-      const passwordMatch = await bcrypt.compare(password, admin.password);
-  
-      if (!passwordMatch) {
-        return res.status(401).json({ error: 'Invalid credentials' });
-      }
-  
-      // Successful login
-      res.json({ message: 'Login successful' });
+        // Find the admin by username
+        const admin = await Admin.findOne({ username });
+
+        if (!admin) {
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
+
+        // Compare the provided password with the hashed password in the database
+        const passwordMatch = await bcrypt.compare(password, admin.password);
+
+        if (!passwordMatch) {
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
+
+        // Successful login
+        res.json({ message: 'Login successful' });
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: 'Internal Server Error' });
+        console.error(error);
+        res.status(500).json({ error: `Internal Server Error: ${error.message}` });
     }
-  });
-  
-  // Start the server
-  const PORT = process.env.PORT || 3000;
-  app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-  });
+});
+
+app.listen(3002, () => {
+    console.log("Server is Running");
+});

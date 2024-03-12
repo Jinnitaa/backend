@@ -663,7 +663,7 @@ app.post('/login', async (req, res) => {
 
     try {
         // Find the admin by username
-        const admin = await Admin.findOne({ username });
+        const admin = await Admin.findOne({ username, password });
 
         if (!admin) {
             return res.status(401).json({ error: 'Invalid credentials' });
@@ -684,6 +684,13 @@ app.post('/login', async (req, res) => {
     }
 });
 
-app.listen(3002, () => {
-    console.log("Server is Running");
+app.get('/login', (req, res) => {
+    AdminModel.find({})
+        .then(admin => res.json(admin))
+        .catch(err => res.json(err));
 });
+
+app.listen(3002, () => {
+    console.log("Server is Running on Port 3002");
+});
+

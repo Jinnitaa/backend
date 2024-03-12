@@ -10,6 +10,8 @@ const DealerModel = require('./models/Dealer');
 const MessageModel = require('./models/Message');
 const ResourceModel = require('./models/Resource');
 const VideoModel = require('./models/Video');
+const bcrypt = require('bcrypt');
+const Admin = require('./models/Admin');
 
 
 const multer = require('multer');
@@ -656,3 +658,36 @@ app.put('/updateVideo/:id', async (req, res) => {
         res.status(500).json({ error: "Internal Server Error" });
     }
 });
+
+////////////////////////////////Admin Login /////////////////////////////////////////////
+app.post('/admin/login', async (req, res) => {
+    const { username, password } = req.body;
+  
+    try {
+      // Find the admin by username
+      const admin = await Admin.findOne({ username });
+  
+      if (!admin) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+  
+      // Compare the provided password with the hashed password in the database
+      const passwordMatch = await bcrypt.compare(password, admin.password);
+  
+      if (!passwordMatch) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+  
+      // Successful login
+      res.json({ message: 'Login successful' });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
+  
+  // Start the server
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });

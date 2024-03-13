@@ -670,7 +670,7 @@ app.get("/admin/login", (req, res) => {
       const admin = await AdminModel.findOne({ username });
   
       if (!admin) {
-        return res.json({ error: "Admin Not found" });
+        return res.json({ status: "error", error: "Admin Not found" });
       }
   
       const passwordMatch = await bcrypt.compare(password, admin.password);
@@ -682,11 +682,12 @@ app.get("/admin/login", (req, res) => {
   
         return res.status(201).json({ status: "ok", data: token });
       } else {
-        return res.json({ status: "error", error: "Invalid Password" });
+        // Return an error response for incorrect password
+        return res.status(401).json({ status: "error", error: "Invalid Password" });
       }
     } catch (error) {
       console.error("Error during login:", error);
-      res.status(500).json({ error: "Internal Server Error" });
+      res.status(500).json({ status: "error", error: "Internal Server Error" });
     }
   });
 

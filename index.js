@@ -616,7 +616,7 @@ app.post("/createVideo", (req, res) => {
 });
 
 // Get All Videos
-app.get('/admin/videos', (req, res) => {
+app.get('/admin/videos', verifyToken,(req, res) => {
     VideoModel.find({})
         .then(videos => res.json(videos))
         .catch(err => res.json(err));

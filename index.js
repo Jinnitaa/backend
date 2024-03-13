@@ -658,27 +658,33 @@ app.put('/updateVideo/:id', async (req, res) => {
 });
 
 ////////////////////////////////Admin Login /////////////////////////////////////////////
-app.post("/login", async (req, res) => {
+app.post("/admin/login", async (req, res) => {
     const { username, password } = req.body;
-  
-    const user = await AdminModel.findOne({ username });
-    if (!user) {
-      return res.json({ error: "User Not found" });
+
+    try {
+        const admin = await AdminModel.findOne({ username });
+
+        if (!admin) {
+            return res.json({ error: "Admin Not found" });
+        }
+
+        const passwordMatch = await bcrypt.compare(password, admin.password);
+
+        if (passwordMatch) {
+            const token = jwt.sign({ username: admin.username }, JWT_SECRET, {
+                expiresIn: "15m",
+            });
+
+            return res.status(201).json({ status: "ok", data: token });
+        } else {
+            return res.json({ status: "error", error: "Invalid Password" });
+        }
+    } catch (error) {
+        console.error("Error during login:", error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
-    if (await bcrypt.compare(password, user.password)) {
-      const token = jwt.sign({ username: user.username }, JWT_SECRET, {
-        expiresIn: "15m",
-      });
-  
-      if (res.status(201)) {
-        return res.json({ status: "ok", data: token });
-      } else {
-        return res.json({ error: "error" });
-      }
-    }
-    res.json({ status: "error", error: "Invalid Password" });
-  });
-  
+});
+
 
 app.get('/login', (req, res) => {
     AdminModel.find({})

@@ -658,39 +658,37 @@ app.put('/updateVideo/:id', async (req, res) => {
 });
 
 ////////////////////////////////Admin Login /////////////////////////////////////////////
-app.post("/admin/login", async (req, res) => {
+app.get("/admin/login", (req, res) => {
+    // Handle GET requests for /admin/login (if needed)
+    res.send("GET request to /admin/login");
+  });
+  
+  app.post("/admin/login", async (req, res) => {
     const { username, password } = req.body;
-
+  
     try {
-        const admin = await AdminModel.findOne({ username });
-
-        if (!admin) {
-            return res.json({ error: "Admin Not found" });
-        }
-
-        const passwordMatch = await bcrypt.compare(password, admin.password);
-
-        if (passwordMatch) {
-            const token = jwt.sign({ username: admin.username }, JWT_SECRET, {
-                expiresIn: "15m",
-            });
-
-            return res.status(201).json({ status: "ok", data: token });
-        } else {
-            return res.json({ status: "error", error: "Invalid Password" });
-        }
+      const admin = await AdminModel.findOne({ username });
+  
+      if (!admin) {
+        return res.json({ error: "Admin Not found" });
+      }
+  
+      const passwordMatch = await bcrypt.compare(password, admin.password);
+  
+      if (passwordMatch) {
+        const token = jwt.sign({ username: admin.username }, JWT_SECRET, {
+          expiresIn: "15m",
+        });
+  
+        return res.status(201).json({ status: "ok", data: token });
+      } else {
+        return res.json({ status: "error", error: "Invalid Password" });
+      }
     } catch (error) {
-        console.error("Error during login:", error);
-        res.status(500).json({ error: "Internal Server Error" });
+      console.error("Error during login:", error);
+      res.status(500).json({ error: "Internal Server Error" });
     }
-});
-
-
-app.get('/login', (req, res) => {
-    AdminModel.find({})
-        .then(admin => res.json(admin))
-        .catch(err => res.json(err));
-});
+  });
 
 app.listen(3002, () => {
     console.log("Server is Running on Port 3002");

@@ -661,7 +661,7 @@ app.put('/updateVideo/:id', async (req, res) => {
 app.post("/login", async (req, res) => {
     const { username, password } = req.body;
   
-    const user = await User.findOne({ username });
+    const user = await AdminModel.findOne({ username });
     if (!user) {
       return res.json({ error: "User Not found" });
     }
@@ -689,9 +689,5 @@ app.get('/login', (req, res) => {
 app.listen(3002, () => {
     console.log("Server is Running on Port 3002");
 });
-// function findUsers(res) {
-//     Admin.find({})
-//         .then(admins => res.json(admins))
-//         .catch(err => res.json(err));
-// }
+
 

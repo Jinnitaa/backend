@@ -11,7 +11,7 @@ const MessageModel = require('./models/Message');
 const ResourceModel = require('./models/Resource');
 const VideoModel = require('./models/Video');
 const bcrypt = require('bcrypt');
-const Admin = require('./models/Admin');
+const AdminModel = require('./models/Admin');
 
 
 const multer = require('multer');
@@ -658,31 +658,27 @@ app.put('/updateVideo/:id', async (req, res) => {
 });
 
 ////////////////////////////////Admin Login /////////////////////////////////////////////
-app.post('/login', async (req, res) => {
+app.post("/login", async (req, res) => {
     const { username, password } = req.body;
-
-    try {
-        // Find the admin by username
-        const admin = await Admin.findOne({ username, password });
-
-        if (!admin) {
-            return res.status(401).json({ error: 'Invalid credentials' });
-        }
-
-        // Compare the provided password with the hashed password in the database
-        const passwordMatch = await bcrypt.compare(password, admin.password);
-
-        if (!passwordMatch) {
-            return res.status(401).json({ error: 'Invalid credentials' });
-        }
-
-        // Successful login
-        res.json({ message: 'Login successful' });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: `Internal Server Error: ${error.message}` });
+  
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.json({ error: "User Not found" });
     }
-});
+    if (await bcrypt.compare(password, user.password)) {
+      const token = jwt.sign({ username: user.username }, JWT_SECRET, {
+        expiresIn: "15m",
+      });
+  
+      if (res.status(201)) {
+        return res.json({ status: "ok", data: token });
+      } else {
+        return res.json({ error: "error" });
+      }
+    }
+    res.json({ status: "error", error: "Invalid Password" });
+  });
+  
 
 app.get('/login', (req, res) => {
     AdminModel.find({})
@@ -693,4 +689,9 @@ app.get('/login', (req, res) => {
 app.listen(3002, () => {
     console.log("Server is Running on Port 3002");
 });
+// function findUsers(res) {
+//     Admin.find({})
+//         .then(admins => res.json(admins))
+//         .catch(err => res.json(err));
+// }
 

@@ -1,5 +1,4 @@
 
-require('dotenv').config();
 const mongoose = require('mongoose');
 const cors = require('cors');
 const EmployeeModel = require('./models/Employee');
@@ -11,7 +10,9 @@ const MessageModel = require('./models/Message');
 const ResourceModel = require('./models/Resource');
 const VideoModel = require('./models/Video');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken')
 const AdminModel = require('./models/Admin');
+require('dotenv').config();
 
 
 const multer = require('multer');
@@ -23,7 +24,22 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-
+const verifyToken = (req, res, next) => {
+    const token = req.headers['authorization'];
+  
+    if (!token) {
+      return res.status(401).json({ error: 'Unauthorized: Token is missing' });
+    }
+  
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+      if (err) {
+        return res.status(401).json({ error: 'Unauthorized: Invalid token' });
+      }
+      req.userId = decoded.id;
+      next();
+    });
+  };
+  
 // Attempt to connect to the MongoDB database
 try {
     mongoose.connect(process.env.MONGODB_URI, {
@@ -658,39 +674,41 @@ app.put('/updateVideo/:id', async (req, res) => {
 });
 
 ////////////////////////////////Admin Login /////////////////////////////////////////////
-app.get("/admin/login", (req, res) => {
+app.get("/admin/login", verifyToken, (req, res) => {
     // Handle GET requests for /admin/login (if needed)
-    res.send("GET request to /admin/login");
+    AdminModel.find({})
+    .then(admins => res.json(admins))
+    .catch(err => res.json(err));
+    // res.send("GET request to /admin/login");
   });
   
   app.post("/admin/login", async (req, res) => {
     const { username, password } = req.body;
-  
     try {
-      const admin = await AdminModel.findOne({ username });
+      const user = await AdminModel.findOne({ username });
   
-      if (!admin) {
-        return res.json({ status: "error", error: "Admin Not found" });
+      if (!user) {
+        return res.status(400).json({ error: "Invalid username or password" });
       }
   
-      const passwordMatch = await bcrypt.compare(password, admin.password);
-  
-      if (passwordMatch) {
-        const token = jwt.sign({ username: admin.username }, JWT_SECRET, {
-          expiresIn: "15m",
-        });
-  
-        return res.status(201).json({ status: "ok", data: token });
-      } else {
-        // Return an error response for incorrect password
-        return res.status(401).json({ status: "error", error: "Invalid Password" });
+      const isPasswordValid = bcrypt.compare(password, user.password);
+      if (!isPasswordValid) {
+        return res.status(400).json({ error: "Invalid username or password" });
       }
+  
+      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+        expiresIn: "1h", // Token expires in 1 hour
+      });
+  
+      res.json({
+        token,
+        message: "Login successful",
+        success: true,
+      });
     } catch (error) {
-      console.error("Error during login:", error);
-      res.status(500).json({ status: "error", error: "Internal Server Error" });
+      res.status(500).json({ error: "Failed to login user" });
     }
   });
-
 app.listen(3002, () => {
     console.log("Server is Running on Port 3002");
 });

@@ -9,7 +9,7 @@ const DealerModel = require('./models/Dealer');
 const MessageModel = require('./models/Message');
 const ResourceModel = require('./models/Resource');
 const VideoModel = require('./models/Video');
-const PipeQuoteModel = require('./models/Admin');
+const PipeQuote = require('./models/PipeQuote');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken')
 const AdminModel = require('./models/Admin');
@@ -715,8 +715,8 @@ app.get("/admin/login", verifyToken, (req, res) => {
 
 app.post('/createQuote', async (req, res) => {
     try {
-      const PipeQuoteModel = await PipeQuoteModel.create(req.body);
-      res.status(201).json(pipeQuote);
+      const PipeQuote = await PipeQuote.create(req.body);
+      res.status(201).json(PipeQuote);
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: 'Internal Server Error' });

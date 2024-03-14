@@ -26,6 +26,17 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+const hashPassword = async (password) => {
+    const saltRounds = 10; // Number of salt rounds
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    return hashedPassword;
+};
+
+// Your Express app setup and routes...
+
+// Export the function to use it in other files
+module.exports = hashPassword;
+
 const verifyToken = (req, res, next) => {
     const token = req.headers['authorization'];
   

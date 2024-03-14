@@ -715,13 +715,13 @@ app.get("/admin/login", verifyToken, (req, res) => {
 
 app.post('/createQuote', async (req, res) => {
     try {
-      const PipeQuote = await PipeQuote.create(req.body);
-      res.status(201).json(PipeQuote);
+      const newPipeQuote = await PipeQuote.create(req.body);
+      res.status(201).json(newPipeQuote);
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: 'Internal Server Error' });
     }
-  });
+});
 
 ////////////////////////////////////////////////////////////////////////////////
 app.listen(3002, () => {

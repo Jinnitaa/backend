@@ -9,6 +9,7 @@ const DealerModel = require('./models/Dealer');
 const MessageModel = require('./models/Message');
 const ResourceModel = require('./models/Resource');
 const VideoModel = require('./models/Video');
+const PipeQuoteModel = require('./models/Admin');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken')
 const AdminModel = require('./models/Admin');
@@ -714,7 +715,7 @@ app.get("/admin/login", verifyToken, (req, res) => {
 
 app.post('/createQuotes', async (req, res) => {
     try {
-      const pipeQuote = await PipeQuote.create(req.body);
+      const PipeQuoteModel = await PipeQuoteModel.create(req.body);
       res.status(201).json(pipeQuote);
     } catch (error) {
       console.error(error);

@@ -10,6 +10,7 @@ const MessageModel = require('./models/Message');
 const ResourceModel = require('./models/Resource');
 const VideoModel = require('./models/Video');
 const PipeQuote = require('./models/PipeQuote');
+const User = require('./models/User');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken')
 const AdminModel = require('./models/Admin');

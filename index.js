@@ -713,15 +713,21 @@ app.get("/admin/login", verifyToken, (req, res) => {
 
 //////////////////////////////////Request Quote/////////////////////////////////////////
 
-app.post('/createQuote', async (req, res) => {
+app.post('/createPipeQuote', async (req, res) => {
     try {
-      const newPipeQuote = await PipeQuote.create(req.body);
-      res.status(201).json(newPipeQuote);
+        const { pipeName, diameter, pressure, quantity, location } = req.body;
+
+        // Create a new PipeQuote document
+        const newPipeQuote = await PipeQuote.create({ pipeName, diameter, pressure, quantity, location });
+        
+        // Respond with the created PipeQuote document
+        res.status(201).json(newPipeQuote);
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: 'Internal Server Error' });
+        console.error(error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 });
+
 
 ////////////////////////////////////////////////////////////////////////////////
 app.listen(3002, () => {

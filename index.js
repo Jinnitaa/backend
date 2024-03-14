@@ -603,13 +603,15 @@ app.delete('/admin/resource/deleteResource/:id', async (req, res) => {
 });
 
 ////////////////////////////////////Video///////////////////////////////////////////////////
-app.post("/createVideo", (req, res) => {
+app.post("/createQuote", async (req, res) => {
     try {
-        const { title, link, description } = req.body;
+        const { message } = req.body; // Extract the message from the request body
 
-        VideoModel.create({ title, link, description })
-            .then(video => res.json(video))
-            .catch(err => res.json(err));
+        // Create a new PipeQuote document using the provided message
+        const newQuote = await PipeQuote.create({ message });
+
+        // Send the newly created PipeQuote document as the response
+        res.status(201).json(newQuote);
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Internal Server Error" });

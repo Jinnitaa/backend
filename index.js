@@ -713,7 +713,7 @@ app.get("/admin/login", verifyToken, (req, res) => {
 
 //////////////////////////////////Request Quote/////////////////////////////////////////
 
-app.post('/createQuotes', async (req, res) => {
+app.post('/createQuote', async (req, res) => {
     try {
       const PipeQuoteModel = await PipeQuoteModel.create(req.body);
       res.status(201).json(pipeQuote);

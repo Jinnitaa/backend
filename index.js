@@ -623,7 +623,7 @@ app.get('/admin/videos', verifyToken,(req, res) => {
 });
 
 // Get Video by ID
-app.get('/admin/video/getVideo/:id', (req, res) => {
+app.get('/admin/video/getVideo/:id', verifyToken,(req, res) => {
     const id = req.params.id;
 
     VideoModel.findById({ _id: id })
@@ -709,6 +709,20 @@ app.get("/admin/login", verifyToken, (req, res) => {
       res.status(500).json({ error: "Failed to login user" });
     }
   });
+
+//////////////////////////////////Request Quote/////////////////////////////////////////
+
+app.post('/createQuotes', async (req, res) => {
+    try {
+      const pipeQuote = await PipeQuote.create(req.body);
+      res.status(201).json(pipeQuote);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
+
+////////////////////////////////////////////////////////////////////////////////
 app.listen(3002, () => {
     console.log("Server is Running on Port 3002");
 });

@@ -713,14 +713,13 @@ app.get("/admin/login", verifyToken, (req, res) => {
 
 //////////////////////////////////Request Quote/////////////////////////////////////////
 
-app.post('/createPipeQuote', async (req, res) => {
+app.post('/createQuote', async (req, res) => {
     try {
-        const { pipeName, diameter, pressure, quantity, location } = req.body;
+        const { message } = req.body;
 
-        // Create a new PipeQuote document
-        const newPipeQuote = await PipeQuote.create({ pipeName, diameter, pressure, quantity, location });
-        
-        // Respond with the created PipeQuote document
+        // Create a new PipeQuote document with the message
+        const newPipeQuote = await PipeQuote.create({ message });
+
         res.status(201).json(newPipeQuote);
     } catch (error) {
         console.error(error);

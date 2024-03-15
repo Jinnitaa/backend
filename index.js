@@ -10,9 +10,10 @@ const MessageModel = require('./models/Message');
 const ResourceModel = require('./models/Resource');
 const VideoModel = require('./models/Video');
 const PipeQuote = require('./models/PipeQuote');
-const User = require('./models/User');
+const { User, validate } = require('./models/User');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken')
+const Joi = require("joi");
 const AdminModel = require('./models/Admin');
 require('dotenv').config();
 
@@ -740,36 +741,62 @@ app.post('/createQuote', async (req, res) => {
 });
 
 ///////////////////////////Register////////////////////////////////////////////////
+
 app.post("/register", async (req, res) => {
-    try {
-        const { name, email, password } = req.body;
-        // Validation
-        if (!name || !email || !password) {
-            return res.status(400).send("Name, email, and password are required");
-        }
-        if (password.length < 6) {
-            return res.status(400).send("Password should be at least 6 characters long");
-        }
-        let userExist = await User.findOne({ email }).exec();
-        if (userExist) {
-            return res.status(400).send("Email is already taken");
-        }
-        // Hash password
-        const hashedPassword = await hashPassword(password);
-        // Register user
-        const user = new User({
-            name,
-            email,
-            password: hashedPassword,
-        });
-        await user.save();
-        console.log("Saved user:", user);
-        return res.json({ ok: true });
-    } catch (err) {
-        console.log(err);
-        return res.status(500).send("Error. Try again.");
-    }
+	try {
+		const { error } = validate(req.body);
+		if (error)
+			return res.status(400).send({ message: error.details[0].message });
+
+		const user = await User.findOne({ email: req.body.email });
+		if (user)
+			return res
+				.status(409)
+				.send({ message: "User with given email already Exist!" });
+
+		const salt = await bcrypt.genSalt(Number(process.env.SALT));
+		const hashPassword = await bcrypt.hash(req.body.password, salt);
+
+		await new User({ ...req.body, password: hashPassword }).save();
+		res.status(201).send({ message: "User created successfully" });
+	} catch (error) {
+		res.status(500).send({ message: "Internal Server Error" });
+	}
 });
+
+///////////////////Login///////////////////////////////////////////////////////
+
+app.post("/login", async (req, res) => {
+	try {
+		const { error } = validate(req.body);
+		if (error)
+			return res.status(400).send({ message: error.details[0].message });
+
+		const user = await User.findOne({ email: req.body.email });
+		if (!user)
+			return res.status(401).send({ message: "Invalid Email or Password" });
+
+		const validPassword = await bcrypt.compare(
+			req.body.password,
+			user.password
+		);
+		if (!validPassword)
+			return res.status(401).send({ message: "Invalid Email or Password" });
+
+		const token = user.generateAuthToken();
+		res.status(200).send({ data: token, message: "logged in successfully" });
+	} catch (error) {
+		res.status(500).send({ message: "Internal Server Error" });
+	}
+});
+
+const validate = (data) => {
+	const schema = Joi.object({
+		email: Joi.string().email().required().label("Email"),
+		password: Joi.string().required().label("Password"),
+	});
+	return schema.validate(data);
+};
 
 
 ////////////////////////////////////////////////////////////////////////////////

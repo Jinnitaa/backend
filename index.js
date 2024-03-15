@@ -744,7 +744,7 @@ app.post('/createQuote', async (req, res) => {
 
 app.post("/register", async (req, res) => {
 	try {
-		const { error } = validate(req.body);
+		const { error } = validateRegister(req.body);
 		if (error)
 			return res.status(400).send({ message: error.details[0].message });
 
@@ -763,6 +763,17 @@ app.post("/register", async (req, res) => {
 		res.status(500).send({ message: "Internal Server Error" });
 	}
 });
+
+const validateRegister = (data) => {
+	const schema = Joi.object({
+		firstName: Joi.string().required().label("First Name"),
+		lastName: Joi.string().required().label("Last Name"),
+		email: Joi.string().email().required().label("Email"),
+    number: Joi.string().required().label("Number"),
+		password: passwordComplexity().required().label("Password"),
+	});
+	return schema.validate(data);
+};
 
 ///////////////////Login///////////////////////////////////////////////////////
 

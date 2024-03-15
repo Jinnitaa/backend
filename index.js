@@ -747,67 +747,80 @@ app.post('/createQuote', async (req, res) => {
 ///////////////////////////Register////////////////////////////////////////////////
 
 app.post("/register", async (req, res) => {
-	try {
-		const { error } = validateRegister(req.body);
-		if (error)
-			return res.status(400).send({ message: error.details[0].message });
+    try {
+        // Validate user input
+        const { error } = validateRegister(req.body);
+        if (error)
+            return res.status(400).send({ message: error.details[0].message });
 
-		let user = await User.findOne({ email: req.body.email });
-		if (user)
-			return res
-				.status(409)
-				.send({ message: "User with given email already Exist!" });
+        // Check if user with given email already exists
+        let user = await User.findOne({ email: req.body.email });
+        if (user)
+            return res.status(409).send({ message: "User with given email already exists!" });
 
-		const salt = await bcrypt.genSalt(Number(process.env.SALT));
-		const hashPassword = await bcrypt.hash(req.body.password, salt);
+        // Hash the password
+        const salt = await bcrypt.genSalt(Number(process.env.SALT));
+        const hashPassword = await bcrypt.hash(req.body.password, salt);
 
-		user= await new User({ ...req.body, password: hashPassword }).save();
-		const token = await new Token({
-			userId: user._id,
-			token: crypto.randomBytes(32).toString("hex"),
-		}).save();
-		const url = `${process.env.BASE_URL}users/${user.id}/verify/${token.token}`;
-		await Email(user.email, "Verify Email", url);
+        // Create and save the new user
+        user = await new User({ ...req.body, password: hashPassword }).save();
 
-		res
-			.status(201)
-			.send({ message: "An Email sent to your account please verify" });
-	} catch (error) {
-		res.status(500).send({ message: "Internal Server Error" });
-	}
+        // Generate verification token
+        const token = await new Token({
+            userId: user._id,
+            token: crypto.randomBytes(32).toString("hex"),
+        }).save();
+
+        // Construct verification email
+        const verificationLink = `${process.env.BASE_URL}/verify-email/${token.token}`;
+        const emailSubject = "Verify Your Email Address";
+        const emailText = `Hello ${user.firstName},\n\nPlease click the following link to verify your email address:\n${verificationLink}\n\nThank you,\nThe Application Team`;
+
+        // Send verification email
+        await Email(user.email, emailSubject, emailText);
+
+        res.status(201).send({ message: "An email has been sent to your account. Please verify your email address." });
+    } catch (error) {
+        console.error("Error in user registration:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+    }
 });
 
+// Validate user registration input
 const validateRegister = (data) => {
-	const schema = Joi.object({
-		firstName: Joi.string().required().label("First Name"),
-		lastName: Joi.string().required().label("Last Name"),
-		email: Joi.string().email().required().label("Email"),
-    number: Joi.string().required().label("Number"),
-		password: passwordComplexity().required().label("Password"),
-	});
-	return schema.validate(data);
+    const schema = Joi.object({
+        firstName: Joi.string().required().label("First Name"),
+        lastName: Joi.string().required().label("Last Name"),
+        email: Joi.string().email().required().label("Email"),
+        number: Joi.string().required().label("Number"),
+        password: Joi.string().required().label("Password"),
+    });
+    return schema.validate(data);
 };
 
-// get link 
+// Verify user's email
+app.get("/verify-email/:token", async (req, res) => {
+    try {
+        // Find the token in the database
+        const token = await Token.findOne({ token: req.params.token });
+        if (!token) return res.status(400).send({ message: "Invalid or expired verification link." });
 
-app.get("/:id/verify/:token/", async (req, res) => {
-	try {
-		const user = await User.findOne({ _id: req.params.id });
-		if (!user) return res.status(400).send({ message: "Invalid link" });
+        // Find the user associated with the token
+        const user = await User.findById(token.userId);
+        if (!user) return res.status(400).send({ message: "User not found." });
 
-		const token = await Token.findOne({
-			userId: user._id,
-			token: req.params.token,
-		});
-		if (!token) return res.status(400).send({ message: "Invalid link" });
+        // Update user's email verification status
+        user.emailVerified = true;
+        await user.save();
 
-		await User.updateOne({ _id: user._id, verified: true });
-		await token.remove();
+        // Delete the verification token from the database
+        await token.deleteOne();
 
-		res.status(200).send({ message: "Email verified successfully" });
-	} catch (error) {
-		res.status(500).send({ message: "Internal Server Error" });
-	}
+        res.status(200).send({ message: "Email verified successfully. You can now login." });
+    } catch (error) {
+        console.error("Error in email verification:", error);
+        res.status(500).send({ message: "Internal Server Error" });
+    }
 });
 
 

@@ -13,7 +13,7 @@ const PipeQuote = require('./models/PipeQuote');
 const { User } = require('./models/User');
 const AdminModel = require('./models/Admin');
 const Token = require("./models/Token");
-const Email = require("./utils/Email");
+const Email =require("./utils/Email")
 
 const crypto = require("crypto");
 const bcrypt = require('bcrypt');
@@ -634,14 +634,14 @@ app.post("/createVideo", (req, res) => {
 });
 
 // Get All Videos
-app.get('/admin/videos', verifyToken,(req, res) => {
+app.get('/admin/videos',(req, res) => {
     VideoModel.find({})
         .then(videos => res.json(videos))
         .catch(err => res.json(err));
 });
 
 // Get Video by ID
-app.get('/admin/video/getVideo/:id', verifyToken,(req, res) => {
+app.get('/admin/video/getVideo/:id',(req, res) => {
     const id = req.params.id;
 
     VideoModel.findById({ _id: id })

@@ -9,7 +9,7 @@ module.exports = async (email, subject, text) => {
 			secure: false,
 			auth: {
 				user: 'phalpanhanyta12d@gmail.com',
-				pass: 'KKweb12345',
+				pass: 'Nyta12d12345',
 			},
 		});
 

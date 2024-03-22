@@ -692,41 +692,55 @@ app.put('/updateVideo/:id', async (req, res) => {
 });
 
 ////////////////////////////////Admin Login /////////////////////////////////////////////
-app.get("/admin/login", verifyToken, (req, res) => {
-    // Handle GET requests for /admin/login (if needed)
-    AdminModel.find({})
-    .then(admins => res.json(admins))
-    .catch(err => res.json(err));
-    // res.send("GET request to /admin/login");
+app.post("/admin/signup", async (req, res) => {
+    try {
+      const hashedPassword = await bcrypt.hash(req.body.password, 10);
+      const user = new AdminModel({
+        username: req.body.username,
+        password: hashedPassword,
+      });
+      await user.save();
+      res.json({
+        message: "Signup successful",
+        success: true,
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to signup user" });
+    }
   });
-  
-  app.post("/admin/login", async (req, res) => {
+
+
+
+
+app.post("/admin/login", async (req, res) => {
     const { username, password } = req.body;
     try {
       const user = await AdminModel.findOne({ username });
   
       if (!user) {
-        return res.status(400).json({ error: "Invalid username or password" });
+        return res.status(400).json({ msg: "User does not exist" });
       }
   
-      const isPasswordValid = bcrypt.compare(password, user.password);
-      if (!isPasswordValid) {
-        return res.status(400).json({ error: "Invalid username or password" });
-      }
+      bcrypt.compare(password, user.password, (err, result) => {
+        if (err) {
+          return res.status(500).json({ error: "Failed to compare passwords" });
+        }
+        
+        if (result) {
+          const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+            expiresIn: "1h", // Token expires in 1 hour
+          });
   
-      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-        expiresIn: "1h", // Token expires in 1 hour
-      });
-  
-      res.json({
-        token,
-        message: "Login successful",
-        success: true,
+          return res.status(200).json({ token, msg: "Login successful" });
+        } else {
+          return res.status(401).json({ msg: "Invalid credentials" });
+        }
       });
     } catch (error) {
       res.status(500).json({ error: "Failed to login user" });
     }
   });
+  
 
 //////////////////////////////////Request Quote/////////////////////////////////////////
 

@@ -26,6 +26,7 @@ const multer = require('multer');
 const fs = require('fs');
 const express = require('express');
 const path = require('path');
+const { log } = require('console');
 
 const app = express();
 app.use(cors());
@@ -739,7 +740,7 @@ app.post("/admin/login", async (req, res) => {
         if (err) {
           return res.status(500).json({ error: "Failed to compare passwords" });
         }
-        
+        console.log(result);
         if (result) {
           const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
             expiresIn: "1h", // Token expires in 1 hour
@@ -747,7 +748,7 @@ app.post("/admin/login", async (req, res) => {
   
           return res.status(200).json({ token, msg: "Login successful" });
         } else {
-          return res.status(401).json({ msg: "Invalid credentials" });
+          return res.status(401).json({ msg: "Wrong pass" });
         }
       });
     } catch (error) {
@@ -890,7 +891,7 @@ const validateLogin = (data) => {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-app.listen(3002, () => {
+app.listen(3003, () => {
     console.log("Server is Running on Port 3002");
 });
 

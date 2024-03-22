@@ -6,18 +6,6 @@ const adminSchema = new mongoose.Schema({
   password: { type: String, required: true },
 });
 
-// Hash the password before saving to the database
-adminSchema.pre('save', async function (next) {
-  try {
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(this.password, salt);
-    this.password = hashedPassword;
-    next();
-  } catch (error) {
-    next(error);
-  }
-});
-
 const   AdminModel = mongoose.model('Admin', adminSchema);
 
 module.exports = AdminModel;

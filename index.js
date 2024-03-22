@@ -563,14 +563,14 @@ app.delete('/admin/message/deleteMessage/:id', async (req, res) => {
 
 ///////////////////////////////Resource/////////////////////////////////////////////////
 
-app.post("/createResource", upload.single('file'), (req, res) => {
+app.post("/createResource", upload.single('file'), async (req, res) => {
     try {
-        const { title } = req.body; // Change from tile to title
-        const filePath = req.file ? req.file.filename : null;
+        const { title } = req.body;
+        const filePath = req.file ? req.file.path : null; // Use req.file.path instead of filename
 
-        ResourceModel.create({ title, file: filePath }) // Change from FittingModel to ResourceModel
-            .then(resource => res.json(resource))
-            .catch(err => res.json(err));
+        const resource = await ResourceModel.create({ title, filePath });
+
+        res.json(resource);
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Internal Server Error" });
@@ -578,44 +578,58 @@ app.post("/createResource", upload.single('file'), (req, res) => {
 });
 
 // Get All Resources
-app.get('/admin/resources', (req, res) => {
-    ResourceModel.find({})
-        .then(resources => res.json(resources))
-        .catch(err => res.json(err));
+app.get('/admin/resources', async (req, res) => {
+    try {
+        const resources = await ResourceModel.find({});
+        res.json(resources);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
 });
 
 // Get Resource by ID and Serve File
-app.get('/admin/resource/getResource/:id', (req, res) => {
-    const id = req.params.id;
+app.get('/admin/resource/getResource/:id', async (req, res) => {
+    try {
+        const id = req.params.id;
+        const resource = await ResourceModel.findById(id);
 
-    ResourceModel.findById({ _id: id })
-        .then(resource => {
-            const filePath = `./uploads/${resource.file}`; // Change from resource.path to resource.file
-            res.sendFile(filePath);
-        })
-        .catch(err => res.json(err));
+        if (!resource) {
+            return res.status(404).json({ error: "Resource not found" });
+        }
+
+        const filePath = resource.filePath;
+        if (!fs.existsSync(filePath)) {
+            return res.status(404).json({ error: "File not found" });
+        }
+
+        res.sendFile(filePath);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
 });
 
 // Delete Resource
 app.delete('/admin/resource/deleteResource/:id', async (req, res) => {
-    const id = req.params.id;
-
     try {
-        // Find the resource to be deleted
-        const resource = await ResourceModel.findById({ _id: id });
+        const id = req.params.id;
+        const resource = await ResourceModel.findById(id);
 
-        // Delete the file associated with the resource
-        if (resource.file) {
-            const filePath = `./uploads/${resource.file}`; // Change from resource.path to resource.file
+        if (!resource) {
+            return res.status(404).json({ error: "Resource not found" });
+        }
+
+        const filePath = resource.filePath;
+        if (fs.existsSync(filePath)) {
             fs.unlinkSync(filePath);
         }
 
-        // Delete the resource from MongoDB
-        const result = await ResourceModel.findByIdAndDelete({ _id: id });
+        await ResourceModel.findByIdAndDelete(id);
 
-        res.json(result);
-    } catch (err) {
-        console.error(err);
+        res.json({ message: "Resource deleted successfully" });
+    } catch (error) {
+        console.error(error);
         res.status(500).json({ error: "Internal Server Error" });
     }
 });

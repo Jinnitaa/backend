@@ -694,20 +694,34 @@ app.put('/updateVideo/:id', async (req, res) => {
 ////////////////////////////////Admin Login /////////////////////////////////////////////
 app.post("/admin/signup", async (req, res) => {
     try {
-      const hashedPassword = await bcrypt.hash(req.body.password, 10);
-      const user = new AdminModel({
-        username: req.body.username,
-        password: hashedPassword,
-      });
-      await user.save();
-      res.json({
-        message: "Signup successful",
-        success: true,
-      });
+        const { username, password } = req.body;
+
+        // Ensure both username and password are provided
+        if (!username || !password) {
+            return res.status(400).json({ error: "Username and password are required" });
+        }
+
+        // Hash the password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Create new admin
+        const newAdmin = new AdminModel({
+            username,
+            password: hashedPassword
+        });
+
+        // Save admin to the database
+        await newAdmin.save();
+
+        res.json({
+            message: "Admin signup successful",
+            success: true
+        });
     } catch (error) {
-      res.status(500).json({ error: "Failed to signup user" });
+        console.error(error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
-  });
+});
 
 
 

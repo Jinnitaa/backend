@@ -1,10 +1,8 @@
 const mongoose = require('mongoose');
-
 const ResourceSchema = new mongoose.Schema({
     title: String,
-    filePath: String, // Changed from 'file' to 'filePath'
+    link: String, // Change 'file' to 'link' in the schema
 });
 
 const ResourceModel = mongoose.model("resource", ResourceSchema);
-
 module.exports = ResourceModel;

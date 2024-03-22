@@ -563,12 +563,11 @@ app.delete('/admin/message/deleteMessage/:id', async (req, res) => {
 
 ///////////////////////////////Resource/////////////////////////////////////////////////
 
-app.post("/createResource", upload.single('file'), async (req, res) => {
+app.post("/createResource", async (req, res) => {
     try {
-        const { title } = req.body;
-        const filePath = req.file ? req.file.path : null; // Use req.file.path instead of filename
+        const { title, link } = req.body; // Change from title and filePath to title and link
 
-        const resource = await ResourceModel.create({ title, filePath });
+        const resource = await ResourceModel.create({ title, link });
 
         res.json(resource);
     } catch (error) {
@@ -598,12 +597,9 @@ app.get('/admin/resource/getResource/:id', async (req, res) => {
             return res.status(404).json({ error: "Resource not found" });
         }
 
-        const filePath = resource.filePath;
-        if (!fs.existsSync(filePath)) {
-            return res.status(404).json({ error: "File not found" });
-        }
-
-        res.sendFile(filePath);
+        const link = resource.link;
+        // Here you can handle serving the file based on the link provided
+        
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Internal Server Error" });
@@ -614,17 +610,6 @@ app.get('/admin/resource/getResource/:id', async (req, res) => {
 app.delete('/admin/resource/deleteResource/:id', async (req, res) => {
     try {
         const id = req.params.id;
-        const resource = await ResourceModel.findById(id);
-
-        if (!resource) {
-            return res.status(404).json({ error: "Resource not found" });
-        }
-
-        const filePath = resource.filePath;
-        if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-        }
-
         await ResourceModel.findByIdAndDelete(id);
 
         res.json({ message: "Resource deleted successfully" });

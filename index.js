@@ -32,6 +32,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+const corsOptions = {
+    origin: 'https://client-gules-mu.vercel.app',
+  };
+  app.use(cors(corsOptions));
+
 const hashPassword = async (password) => {
     const saltRounds = 10; // Number of salt rounds
     const hashedPassword = await bcrypt.hash(password, saltRounds);

@@ -29,7 +29,13 @@ const path = require('path');
 const { log } = require('console');
 
 const app = express();
-app.use(cors());
+const corsOptions = {
+    origin: 'https://client-gules-mu.vercel.app',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+  };
+  
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Add this middleware to set CORS headers

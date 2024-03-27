@@ -32,9 +32,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const corsOptions = {
-    origin: 'https://client-gules-mu.vercel.app',
-  };
+// Add this middleware to set CORS headers
+app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', 'https://client-gules-mu.vercel.app'); // Replace this with your Vercel domain
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    next();
+  });
  
 
 const hashPassword = async (password) => {

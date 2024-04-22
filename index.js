@@ -467,9 +467,11 @@ app.put("/updateFitting/:id", upload.single('file'), async (req, res) => {
 
         // If a new file is provided, upload it to Cloudinary
         let fileUrl = fitting.file.url;
+        let public_id = fitting.file.public_id;
         if (req.file) {
             const result = await cloudinary.uploader.upload(req.file.path, { folder: 'Fitting' });
             fileUrl = result.secure_url;
+            public_id = result.public_id;
 
             // If there was an existing image, delete it from Cloudinary
             if (fitting.file.public_id) {
@@ -480,7 +482,7 @@ app.put("/updateFitting/:id", upload.single('file'), async (req, res) => {
         // Update fitting information
         fitting.name = name;
         fitting.file.url = fileUrl;
-        fitting.file.public_id = req.file ? result.public_id : fitting.file.public_id; // Update public_id if new image uploaded
+        fitting.file.public_id = public_id; // Update public_id if new image uploaded
         await fitting.save();
 
         res.json({ 

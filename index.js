@@ -453,6 +453,28 @@ app.get('/admin/fitting', async (req, res) => {
     }
 });
 
+// Get Route for fetching a single fitting by ID
+app.get("/getFitting/:id", async (req, res) => {
+    try {
+        const id = req.params.id;
+        // Find the fitting by ID
+        const fitting = await FittingModel.findById(id);
+        if (!fitting) {
+            return res.status(404).json({ error: "Fitting not found" });
+        }
+        // Send the fitting data as a JSON response
+        res.json({ 
+            _id: fitting._id,
+            name: fitting.name,
+            fileUrl: fitting.file.url
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
+// Update Route for updating fitting information
 app.put("/updateFitting/:id", upload.single('file'), async (req, res) => {
     try {
         const id = req.params.id;

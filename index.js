@@ -97,6 +97,23 @@ const storage = multer.diskStorage({
     }
 });
 
+
+// Multer storage configuration
+const storages = multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, '/var/data'); // Set the destination to the mounted Render disk
+    },
+    filename: (req, file, cb) => {
+      // Generate a unique filename
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      const ext = path.extname(file.originalname);
+      cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+    }
+  });
+  
+  // Multer upload configuration
+  const uploads = multer({ storages });
+
 const upload = multer({ storage });
 
 // Serve static files from the 'uploads' directory
@@ -399,7 +416,7 @@ app.delete('/admin/career/deleteCareer/:id', async (req, res) => {
 //////////////////////////////////////////////////Fitting/////////////////////////////////////////////////////////////
 
 // Create Route
-app.post("/createFitting", upload.single('file'), (req, res) => {
+app.post("/createFitting", uploads.single('file'), (req, res) => {
     try {
         const { name } = req.body;
         const filePath = req.file ? req.file.filename : null;
@@ -429,69 +446,64 @@ app.get('/admin/fitting/getFitting/:id', (req, res) => {
 });
 
 // Update Route
-app.put("/updateFitting/:id", upload.single('file'), async (req, res) => {
+app.put("/updateFitting/:id", uploads.single('file'), async (req, res) => {
     try {
-        const id = req.params.id;
-        const { name } = req.body;
-
-        // Check if req.file exists and contains the filename
-        const file = req.file ? req.file.filename : null;
-
-        // Find the fitting to be updated
-        const fitting = await FittingModel.findById({ _id: id });
-
-        // If a new file is provided, delete the old file
-        if (req.file && fitting.file) {
-            const filePath = `./uploads/${fitting.file}`;
-            fs.unlinkSync(filePath);
-        }
-
-        // Update fitting information
-        const updateData = {
-            name
-        };
-
-        // Only update the file field if a new file is provided
-        if (file) {
-            updateData.file = file;
-        }
-
-        const updatedFitting = await FittingModel.findByIdAndUpdate(
-            { _id: id },
-            updateData,
-            { new: true } // Return the updated fitting
-        );
-
-        res.json(updatedFitting);
+      const id = req.params.id;
+      const { name } = req.body;
+  
+      // Check if req.file exists and contains the filename
+      const file = req.file ? req.file.filename : null;
+  
+      // Find the fitting to be updated
+      const fitting = await FittingModel.findById(id);
+  
+      // If a new file is provided and there was an existing file, delete the old file
+      if (req.file && fitting.file) {
+        const filePath = path.join('/var/data', fitting.file);
+        fs.unlinkSync(filePath);
+      }
+  
+      // Update fitting information
+      const updateData = { name };
+  
+      // Only update the file field if a new file is provided
+      if (file) {
+        updateData.file = file;
+      }
+  
+      // Update the fitting in the database
+      const updatedFitting = await FittingModel.findByIdAndUpdate(id, updateData, { new: true });
+  
+      res.json(updatedFitting);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Internal Server Error" });
+      console.error(error);
+      res.status(500).json({ error: "Internal Server Error" });
     }
-});
+  });
 
 // Delete Route
 app.delete('/admin/fitting/deleteFitting/:id', async (req, res) => {
     const id = req.params.id;
-
+  
     try {
-        // Find the fitting to be deleted
-        const fitting = await FittingModel.findById({ _id: id });
-
-        // Delete the file associated with the fitting
-        if (fitting.file) {
-            const filePath = `./uploads/${fitting.file}`;
-            fs.unlinkSync(filePath);
-        }
-
-        // Delete the fitting from MongoDB
-        const result = await FittingModel.findByIdAndDelete({ _id: id });
-
-        res.json(result);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: "Internal Server Error" });
+      // Find the fitting to be deleted
+      const fitting = await FittingModel.findById(id);
+  
+      // Delete the file associated with the fitting
+      if (fitting.file) {
+        const filePath = path.join('/var/data', fitting.file);
+        fs.unlinkSync(filePath);
+      }
+  
+      // Delete the fitting from MongoDB
+      const result = await FittingModel.findByIdAndDelete(id);
+  
+      res.json(result);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Internal Server Error" });
     }
-});
+  });
 
 ///////////////////////////////////Dealer////////////////////////////////////////////
 

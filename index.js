@@ -27,6 +27,7 @@ const fs = require('fs');
 const express = require('express');
 const path = require('path');
 const { log } = require('console');
+const { append } = require('express/lib/response');
 
 const app = express();
 const corsOptions = {
@@ -202,109 +203,126 @@ app.delete('/admin/employee/deleteUser/:id', (req, res) => {
 
 /////////////////////////////////////////////////////News and Event /////////////////////////////////////////////////
 
-// Store the content from input
-app.post("/createNews", upload.fields([{ name: 'thumbnail', maxCount: 1 }, { name: 'photos', maxCount: 10 }]), (req, res) => {
-    const { title, status, date, shortDescription, longDescription } = req.body;
-    const thumbnailPath = req.files['thumbnail'][0].filename;
-    const photosPaths = req.files['photos'].map(photo => photo.filename);
-
-    NewsModel.create({ title, thumbnail: thumbnailPath, photos: photosPaths, status, shortDescription, date, longDescription })
-        .then(news => res.json(news))
-        .catch(err => res.json(err));
-});
-
-// Get Route for listing the content 
-app.get('/admin/news', (req, res) => {
-    NewsModel.find({})
-        .then(news => res.json(news))
-        .catch(err => res.json(err));
-});
-
-// get user by id 
-app.get('/admin/news/getNews/:id', (req, res) => {
-    const id = req.params.id;
-    NewsModel.findById({ _id: id })
-        .then(news => {
-            // Format the date to a string, e.g., YYYY-MM-DD
-            const formattedNews = {
-                ...news.toObject(),
-                date: news.date.toISOString().split('T')[0], // Format date as YYYY-MM-DD
-            };
-            res.json(formattedNews);
-        })
-        .catch(err => res.json(err));
-});
-
-
-app.put("/updateNews/:id", upload.single('thumbnail'), async (req, res) => {
+app.post("/createNews", upload.array('photos'), async (req, res) => {
     try {
-        const id = req.params.id;
-        const { title, status, date, shortDescription, longDescription } = req.body;
+        const { title, status, shortDescription, longDescription } = req.body;
 
-        // Check if req.file exists and contains the filename
-        const thumbnail = req.file ? req.file.filename : null; // Change from 'thumnail' to 'thumbnail'
+        // Upload photos to Cloudinary
+        const photoUrls = await Promise.all(req.files.map(async (file) => {
+            const result = await cloudinary.uploader.upload(file.path, { folder: 'News' });
+            return result.secure_url;
+        }));
 
-        console.log("Received form data:", { title, status, date, shortDescription, longDescription });
+        // Create news document with Cloudinary URLs
+        const news = await NewsModel.create({
+            title,
+            status,
+            thumbnail: photoUrls[0], // Assuming the first photo is the thumbnail
+            photos: photoUrls,
+            shortDescription,
+            longDescription,
+        });
 
-        // Find the news to be updated
-        const news = await NewsModel.findById({ _id: id });
-
-        // If a new file is provided, delete the old file
-        if (req.file && news.thumbnail) {
-            const thumbnailPath = `./uploads/${news.thumbnail}`;
-            fs.unlinkSync(thumbnailPath);
-        }
-
-        // Update news information
-        const updateData = {
-            title, status, date, shortDescription, longDescription
-        };
-
-        // Only update the thumbnail field if a new file is provided
-        if (thumbnail) {
-            updateData.thumbnail = thumbnail;
-        }
-
-        const updatedNews = await NewsModel.findByIdAndUpdate(
-            { _id: id },
-            updateData,
-            { new: true } // Return the updated news
-        );
-
-        res.json(updatedNews);
+        // Send the Cloudinary URLs in the response
+        res.json({ 
+            title: news.title,
+            status: news.status,
+            thumbnail: news.thumbnail,
+            photos: news.photos,
+            shortDescription: news.shortDescription,
+            longDescription: news.longDescription
+        });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Internal Server Error" });
     }
 });
-// delete route 
-app.delete('/admin/news/deleteNews/:id', async (req, res) => {
-    const id = req.params.id;
 
+// Get Route for listing news and events data
+app.get('/admin/news', async (req, res) => {
     try {
-       
-        const news = await NewsModel.findById({ _id: id });
+        // Fetch all news documents from the database
+        const news = await NewsModel.find({});
 
-        
-        if (news.thumbnail) {
-            const thumbnailPath = `./uploads/${news.thumbnail}`;
-            fs.unlinkSync(thumbnailPath);
+        // Send the news as a JSON response
+        res.json(news);
+    } catch (error) {
+        // Handle errors
+        console.error(error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
+// Get Route for fetching a single news or event by ID
+app.get("/getNews/:id", async (req, res) => {
+    try {
+        const id = req.params.id;
+        // Find the news or event by ID
+        const news = await NewsModel.findById(id);
+        if (!news) {
+            return res.status(404).json({ error: "News or event not found" });
+        }
+        // Send the news data as a JSON response
+        res.json(news);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
+// Update Route for updating news and event information
+app.put("/updateNews/:id", upload.array('photos'), async (req, res) => {
+    try {
+        const id = req.params.id;
+        const { title, status, shortDescription, longDescription } = req.body;
+
+        // Find the news or event to be updated
+        const news = await NewsModel.findById(id);
+
+        if (!news) {
+            return res.status(404).json({ error: "News or event not found" });
         }
 
-     
-        if (news.photos && news.photos.length > 0) {
-            news.photos.forEach(photo => {
-                const photoPath = `./uploads/${photo}`;
-                fs.unlinkSync(photoPath);
-            });
+        // If new photos are provided, upload them to Cloudinary
+        if (req.files && req.files.length > 0) {
+            const photoUrls = await Promise.all(req.files.map(async (file) => {
+                const result = await cloudinary.uploader.upload(file.path, { folder: 'News' });
+                return result.secure_url;
+            }));
+            // Update photos with the new ones
+            news.photos = photoUrls;
         }
 
-        
-        const result = await NewsModel.findByIdAndDelete({ _id: id });
+        // Update news or event information
+        news.title = title;
+        news.status = status;
+        news.shortDescription = shortDescription;
+        news.longDescription = longDescription;
 
-        res.json(result);
-    } catch (err) {
-        console.error(err);
+        // Save the updated news or event
+        await news.save();
+
+        res.json(news);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
+// Delete Route for deleting news and event by ID
+app.delete("/deleteNews/:id", async (req, res) => {
+    try {
+        const id = req.params.id;
+        // Find the news or event by ID and delete it
+        const deletedNews = await NewsModel.findByIdAndDelete(id);
+        if (!deletedNews) {
+            return res.status(404).json({ error: "News or event not found" });
+        }
+
+        // Send success response
+        res.json({ message: "News or event deleted successfully" });
+    } catch (error) {
+        console.error(error);
         res.status(500).json({ error: "Internal Server Error" });
     }
 });

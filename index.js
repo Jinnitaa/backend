@@ -218,7 +218,7 @@ app.post("/createNews", upload.array('photos'), async (req, res) => {
             title,
             status,
             thumbnail: { url: photoUrls[0].url, public_id: photoUrls[0].public_id }, // Include public_id for thumbnail
-            photos: photoUrls,
+            photos: photoUrls, // Correctly assign photoUrls array to photos field
             shortDescription,
             longDescription,
         });
@@ -237,6 +237,7 @@ app.post("/createNews", upload.array('photos'), async (req, res) => {
         res.status(500).json({ error: "Internal Server Error" });
     }
 });
+
 
 // Get Route for listing news and events data
 app.get('/admin/news', async (req, res) => {

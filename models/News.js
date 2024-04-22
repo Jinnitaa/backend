@@ -11,8 +11,14 @@ const NewsSchema = new mongoose.Schema({
         type: Date,
         default: Date.now,
     },
-    thumbnail: String, 
-    photos: [String], 
+    thumbnail: {
+        url: String, // URL of the thumbnail image
+        public_id: String // Public ID of the thumbnail image on Cloudinary
+    }, 
+    photos: [{
+        url: String, // URL of the photo
+        public_id: String // Public ID of the photo on Cloudinary
+    }], 
     shortDescription: String,
     longDescription: String,
 });

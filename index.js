@@ -418,34 +418,41 @@ app.delete('/admin/career/deleteCareer/:id', async (req, res) => {
 
 //////////////////////////////////////////////////Fitting/////////////////////////////////////////////////////////////
 
-// Create Route
-app.post("/createFitting", upload.single('file'), async (req, res) => {
+// Create Route for creating news
+app.post("/createNews", upload.array('photos'), async (req, res) => {
     try {
-        const { name } = req.body;
+        const { title, status, shortDescription, longDescription } = req.body;
 
-        // Upload file to Cloudinary
-        const result = await cloudinary.uploader.upload(req.file.path, { folder: 'Fitting' });
+        // Upload photos to Cloudinary
+        const photoUrls = await Promise.all(req.files.map(async (file) => {
+            const result = await cloudinary.uploader.upload(file.path, { folder: 'News' });
+            return { url: result.secure_url, public_id: result.public_id }; // Include public_id
+        }));
 
-        // Create fitting document with Cloudinary URL
-        const fitting = await FittingModel.create({
-            name,
-            file: {
-                public_id: result.public_id,
-                url: result.secure_url
-            }
+        // Create news document with Cloudinary URLs and public IDs
+        const news = await NewsModel.create({
+            title,
+            status,
+            thumbnail: { url: photoUrls[0].url, public_id: photoUrls[0].public_id }, // Include public_id for thumbnail
+            photos: photoUrls,
+            shortDescription,
+            longDescription,
         });
 
-        // Send the Cloudinary URL in the response
+        // Send the Cloudinary URLs and public IDs in the response
         res.json({ 
-            name: fitting.name,
-            fileUrl: fitting.file.url // Assuming 'file' contains the URL of the uploaded file
+            title: news.title,
+            status: news.status,
+            thumbnail: news.thumbnail,
+            photos: news.photos,
+            shortDescription: news.shortDescription,
+            longDescription: news.longDescription
         });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Internal Server Error" });
     }
 });
-
 
 // Get Route for listing fitting data
 app.get('/admin/fitting', async (req, res) => {

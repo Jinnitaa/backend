@@ -516,6 +516,8 @@ app.put("/updateFitting/:id", upload.single('file'), async (req, res) => {
         res.status(500).json({ error: "Internal Server Error" });
     }
 });
+
+
 app.delete("/deleteFitting/:id", async (req, res) => {
     try {
         const id = req.params.id;
@@ -524,6 +526,12 @@ app.delete("/deleteFitting/:id", async (req, res) => {
         if (!deletedFitting) {
             return res.status(404).json({ error: "Fitting not found" });
         }
+
+        // If there was an existing image, delete it from Cloudinary
+        if (deletedFitting.file.public_id) {
+            await cloudinary.uploader.destroy(deletedFitting.file.public_id);
+        }
+
         // Send success response
         res.json({ message: "Fitting deleted successfully" });
     } catch (error) {

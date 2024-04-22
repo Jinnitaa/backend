@@ -205,7 +205,7 @@ app.delete('/admin/employee/deleteUser/:id', (req, res) => {
 
 app.post("/createNews", upload.array('photos'), async (req, res) => {
     try {
-        const { title, status, shortDescription, longDescription } = req.body;
+        const { title, status, shortDescription, longDescription, date } = req.body;
 
         // Upload photos to Cloudinary
         const photoUrls = await Promise.all(req.files.map(async (file) => {
@@ -221,7 +221,7 @@ app.post("/createNews", upload.array('photos'), async (req, res) => {
             photos: photoUrls, // Correctly assign photoUrls array to photos field
             shortDescription,
             longDescription,
-            date: new Date(req.body.date)
+            date // Already converted to Date object by front end
         });
 
         // Send the Cloudinary URLs and public IDs in the response

@@ -221,6 +221,7 @@ app.post("/createNews", upload.array('photos'), async (req, res) => {
             photos: photoUrls, // Correctly assign photoUrls array to photos field
             shortDescription,
             longDescription,
+            date: new Date(req.body.date)
         });
 
         // Send the Cloudinary URLs and public IDs in the response

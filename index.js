@@ -218,8 +218,6 @@ app.get('/admin/news', (req, res) => {
         .catch(err => res.json(err));
 });
 
-
-
 // get user by id 
 app.get('/admin/news/getNews/:id', (req, res) => {
     const id = req.params.id;
@@ -282,16 +280,16 @@ app.delete('/admin/news/deleteNews/:id', async (req, res) => {
     const id = req.params.id;
 
     try {
-        // Find the news to be deleted
+       
         const news = await NewsModel.findById({ _id: id });
 
-        // Delete the thumbnail associated with the news
+        
         if (news.thumbnail) {
             const thumbnailPath = `./uploads/${news.thumbnail}`;
             fs.unlinkSync(thumbnailPath);
         }
 
-        // Delete the photos associated with the news
+     
         if (news.photos && news.photos.length > 0) {
             news.photos.forEach(photo => {
                 const photoPath = `./uploads/${photo}`;
@@ -299,7 +297,7 @@ app.delete('/admin/news/deleteNews/:id', async (req, res) => {
             });
         }
 
-        // Delete the news from MongoDB
+        
         const result = await NewsModel.findByIdAndDelete({ _id: id });
 
         res.json(result);
@@ -786,6 +784,32 @@ app.post('/createQuote', async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
+
+app.get('/getQuotes', async (req, res) => {
+    try {
+        // Find all PipeQuote documents in the database
+        const quotes = await PipeQuote.find({});
+
+        res.status(200).json(quotes);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+app.delete('/deleteQuote/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+  
+      // Find the quote by ID and delete it
+      await PipeQuote.findByIdAndDelete(id);
+  
+      res.status(200).json({ message: 'Quote deleted successfully' });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
+  
 
 ///////////////////////////Register////////////////////////////////////////////////
 

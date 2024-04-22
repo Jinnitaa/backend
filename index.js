@@ -13,7 +13,7 @@ const PipeQuote = require('./models/PipeQuote');
 const { User } = require('./models/User');
 const AdminModel = require('./models/Admin');
 const Token = require("./models/Token");
-const Email =require("./utils/Email")
+
 
 const crypto = require("crypto");
 const bcrypt = require('bcrypt');

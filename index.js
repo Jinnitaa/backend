@@ -408,7 +408,6 @@ app.post("/createFitting", upload.single('file'), async (req, res) => {
         // Upload file to Cloudinary
         const result = await cloudinary.uploader.upload(req.file.path, { folder: 'Fitting' });
 
-
         // Create fitting document with Cloudinary URL
         const fitting = await FittingModel.create({
             name,
@@ -418,17 +417,40 @@ app.post("/createFitting", upload.single('file'), async (req, res) => {
             }
         });
 
-        res.json(fitting);
+        // Send the Cloudinary URL in the response
+        res.json({ 
+            name: fitting.name,
+            fileUrl: fitting.file.url // Assuming 'file' contains the URL of the uploaded file
+        });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Internal Server Error" });
     }
 });
+
+
 // Get Route for listing fitting data
-app.get('/admin/fitting', (req, res) => {
-    FittingModel.find({})
-        .then(fittings => res.json(fittings))
-        .catch(err => res.json(err));
+app.get('/admin/fitting', async (req, res) => {
+    try {
+        // Fetch all fitting documents from the database
+        const fittings = await FittingModel.find({});
+
+        // Map fittings to include the Cloudinary URL of the uploaded image
+        const fittingsWithUrls = fittings.map(fitting => {
+            return {
+                _id: fitting._id,
+                name: fitting.name,
+                fileUrl: fitting.file.url // Assuming 'file' contains the URL of the uploaded file
+            };
+        });
+
+        // Send the fittings with Cloudinary URLs as a JSON response
+        res.json(fittingsWithUrls);
+    } catch (error) {
+        // Handle errors
+        console.error(error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
 });
 
 // Get fitting by ID

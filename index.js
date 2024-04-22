@@ -13,7 +13,7 @@ const PipeQuote = require('./models/PipeQuote');
 const { User } = require('./models/User');
 const AdminModel = require('./models/Admin');
 const Token = require("./models/Token");
-
+const Cloudinary=require("./utils/cloudinary")
 
 const crypto = require("crypto");
 const bcrypt = require('bcrypt');
@@ -98,6 +98,8 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage });
+
+const uploads = multer({ dest: '/var/data' });
 
 // Serve static files from the 'uploads' directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -399,20 +401,29 @@ app.delete('/admin/career/deleteCareer/:id', async (req, res) => {
 //////////////////////////////////////////////////Fitting/////////////////////////////////////////////////////////////
 
 // Create Route
-app.post("/createFitting", upload.single('file'), (req, res) => {
+app.post("/createFitting", upload.single('file'), async (req, res) => {
     try {
         const { name } = req.body;
-        const filePath = req.file ? req.file.filename : null;
 
-        FittingModel.create({ name, file: filePath })
-            .then(fitting => res.json(fitting))
-            .catch(err => res.json(err));
+        // Upload file to Cloudinary
+        const result = await cloudinary.uploader.upload(req.file.path, { folder: 'Fitting' });
+
+
+        // Create fitting document with Cloudinary URL
+        const fitting = await FittingModel.create({
+            name,
+            file: {
+                public_id: result.public_id,
+                url: result.secure_url
+            }
+        });
+
+        res.json(fitting);
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Internal Server Error" });
     }
 });
-
 // Get Route for listing fitting data
 app.get('/admin/fitting', (req, res) => {
     FittingModel.find({})

@@ -516,26 +516,18 @@ app.put("/updateFitting/:id", upload.single('file'), async (req, res) => {
         res.status(500).json({ error: "Internal Server Error" });
     }
 });
-// Delete Route
-app.delete('/admin/fitting/deleteFitting/:id', async (req, res) => {
-    const id = req.params.id;
-
+app.delete("/deleteFitting/:id", async (req, res) => {
     try {
-        // Find the fitting to be deleted
-        const fitting = await FittingModel.findById({ _id: id });
-
-        // Delete the file associated with the fitting
-        if (fitting.file) {
-            const filePath = `./uploads/${fitting.file}`;
-            fs.unlinkSync(filePath);
+        const id = req.params.id;
+        // Find the fitting by ID and delete it
+        const deletedFitting = await FittingModel.findByIdAndDelete(id);
+        if (!deletedFitting) {
+            return res.status(404).json({ error: "Fitting not found" });
         }
-
-        // Delete the fitting from MongoDB
-        const result = await FittingModel.findByIdAndDelete({ _id: id });
-
-        res.json(result);
-    } catch (err) {
-        console.error(err);
+        // Send success response
+        res.json({ message: "Fitting deleted successfully" });
+    } catch (error) {
+        console.error(error);
         res.status(500).json({ error: "Internal Server Error" });
     }
 });

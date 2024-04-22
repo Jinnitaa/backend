@@ -453,55 +453,45 @@ app.get('/admin/fitting', async (req, res) => {
     }
 });
 
-// Get fitting by ID
-app.get('/admin/fitting/getFitting/:id', (req, res) => {
-    const id = req.params.id;
-    FittingModel.findById({ _id: id })
-        .then(fitting => res.json(fitting))
-        .catch(err => res.json(err));
-});
-
-// Update Route
 app.put("/updateFitting/:id", upload.single('file'), async (req, res) => {
     try {
         const id = req.params.id;
         const { name } = req.body;
 
-        // Check if req.file exists and contains the filename
-        const file = req.file ? req.file.filename : null;
-
         // Find the fitting to be updated
-        const fitting = await FittingModel.findById({ _id: id });
+        const fitting = await FittingModel.findById(id);
 
-        // If a new file is provided, delete the old file
-        if (req.file && fitting.file) {
-            const filePath = `./uploads/${fitting.file}`;
-            fs.unlinkSync(filePath);
+        if (!fitting) {
+            return res.status(404).json({ error: "Fitting not found" });
+        }
+
+        // If a new file is provided, upload it to Cloudinary
+        let fileUrl = fitting.file.url;
+        if (req.file) {
+            const result = await cloudinary.uploader.upload(req.file.path, { folder: 'Fitting' });
+            fileUrl = result.secure_url;
+
+            // If there was an existing image, delete it from Cloudinary
+            if (fitting.file.public_id) {
+                await cloudinary.uploader.destroy(fitting.file.public_id);
+            }
         }
 
         // Update fitting information
-        const updateData = {
-            name
-        };
+        fitting.name = name;
+        fitting.file.url = fileUrl;
+        fitting.file.public_id = req.file ? result.public_id : fitting.file.public_id; // Update public_id if new image uploaded
+        await fitting.save();
 
-        // Only update the file field if a new file is provided
-        if (file) {
-            updateData.file = file;
-        }
-
-        const updatedFitting = await FittingModel.findByIdAndUpdate(
-            { _id: id },
-            updateData,
-            { new: true } // Return the updated fitting
-        );
-
-        res.json(updatedFitting);
+        res.json({ 
+            name: fitting.name,
+            fileUrl: fitting.file.url
+        });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Internal Server Error" });
     }
 });
-
 // Delete Route
 app.delete('/admin/fitting/deleteFitting/:id', async (req, res) => {
     const id = req.params.id;

@@ -210,20 +210,20 @@ app.post("/createNews", upload.array('photos'), async (req, res) => {
         // Upload photos to Cloudinary
         const photoUrls = await Promise.all(req.files.map(async (file) => {
             const result = await cloudinary.uploader.upload(file.path, { folder: 'News' });
-            return result.secure_url;
+            return { url: result.secure_url, public_id: result.public_id }; // Include public_id
         }));
 
-        // Create news document with Cloudinary URLs
+        // Create news document with Cloudinary URLs and public IDs
         const news = await NewsModel.create({
             title,
             status,
-            thumbnail: photoUrls[0], // Assuming the first photo is the thumbnail
+            thumbnail: { url: photoUrls[0].url, public_id: photoUrls[0].public_id }, // Include public_id for thumbnail
             photos: photoUrls,
             shortDescription,
             longDescription,
         });
 
-        // Send the Cloudinary URLs in the response
+        // Send the Cloudinary URLs and public IDs in the response
         res.json({ 
             title: news.title,
             status: news.status,

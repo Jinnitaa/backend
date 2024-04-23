@@ -379,18 +379,30 @@ app.put("/updateNews/:id", upload.fields([{ name: 'thumbnail', maxCount: 1 }, { 
     }
 });
 
-// Delete Route for deleting news and event by ID
+/// Delete Route for deleting news by ID
 app.delete("/deleteNews/:id", async (req, res) => {
     try {
         const id = req.params.id;
-        // Find the news or event by ID and delete it
+        // Find the news by ID and delete it
         const deletedNews = await NewsModel.findByIdAndDelete(id);
         if (!deletedNews) {
-            return res.status(404).json({ error: "News or event not found" });
+            return res.status(404).json({ error: "News not found" });
+        }
+
+        // If there was an existing thumbnail, delete it from Cloudinary
+        if (deletedNews.thumbnail.public_id) {
+            await cloudinary.uploader.destroy(deletedNews.thumbnail.public_id);
+        }
+
+        // If there were existing photos, delete them from Cloudinary
+        if (deletedNews.photos.length > 0) {
+            await Promise.all(deletedNews.photos.map(async (photo) => {
+                await cloudinary.uploader.destroy(photo.public_id);
+            }));
         }
 
         // Send success response
-        res.json({ message: "News or event deleted successfully" });
+        res.json({ message: "News deleted successfully" });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Internal Server Error" });

@@ -203,7 +203,7 @@ app.delete('/admin/employee/deleteUser/:id', (req, res) => {
 
 /////////////////////////////////////////////////////News and Event /////////////////////////////////////////////////
 
-pp.post("/createNews", upload.fields([{ name: 'thumbnail', maxCount: 1 }, { name: 'photos', maxCount: 10 }]), async (req, res) => {
+app.post("/createNews", upload.fields([{ name: 'thumbnail', maxCount: 1 }, { name: 'photos', maxCount: 10 }]), async (req, res) => {
     try {
         const { title, status, date, shortDescription, longDescription } = req.body;
         

@@ -275,56 +275,104 @@ app.get("/getNews", async (req, res) => {
 });
 
 
-// Get Route for fetching a single news or event by ID
+// Get Route for fetching a single news by ID
 app.get("/getNews/:id", async (req, res) => {
     try {
         const id = req.params.id;
-        // Find the news or event by ID
+        // Find the news by ID
         const news = await NewsModel.findById(id);
         if (!news) {
-            return res.status(404).json({ error: "News or event not found" });
+            return res.status(404).json({ error: "News not found" });
         }
         // Send the news data as a JSON response
-        res.json(news);
+        res.json({ 
+            _id: news._id,
+            title: news.title,
+            status: news.status,
+            date: news.date,
+            thumbnailUrl: news.thumbnail.url,
+            photos: news.photos.map(photo => ({
+                url: photo.url,
+                public_id: photo.public_id
+            })),
+            shortDescription: news.shortDescription,
+            longDescription: news.longDescription
+        });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Internal Server Error" });
     }
 });
 
-// Update Route for updating news and event information
-app.put("/updateNews/:id", upload.array('photos'), async (req, res) => {
+// Update Route for updating news information
+app.put("/updateNews/:id", upload.fields([{ name: 'thumbnail', maxCount: 1 }, { name: 'photos', maxCount: 10 }]), async (req, res) => {
     try {
         const id = req.params.id;
-        const { title, status, shortDescription, longDescription } = req.body;
+        const { title, status, date, shortDescription, longDescription } = req.body;
 
-        // Find the news or event to be updated
+        // Find the news to be updated
         const news = await NewsModel.findById(id);
 
         if (!news) {
-            return res.status(404).json({ error: "News or event not found" });
+            return res.status(404).json({ error: "News not found" });
+        }
+
+        // If a new thumbnail is provided, upload it to Cloudinary
+        let thumbnailUrl = news.thumbnail.url;
+        let thumbnailPublicId = news.thumbnail.public_id;
+        if (req.files['thumbnail'] && req.files['thumbnail'][0]) {
+            const thumbnailResult = await cloudinary.uploader.upload(req.files['thumbnail'][0].path, { folder: 'News' });
+            thumbnailUrl = thumbnailResult.secure_url;
+            thumbnailPublicId = thumbnailResult.public_id;
+
+            // If there was an existing thumbnail, delete it from Cloudinary
+            if (news.thumbnail.public_id) {
+                await cloudinary.uploader.destroy(news.thumbnail.public_id);
+            }
         }
 
         // If new photos are provided, upload them to Cloudinary
-        if (req.files && req.files.length > 0) {
-            const photoUrls = await Promise.all(req.files.map(async (file) => {
-                const result = await cloudinary.uploader.upload(file.path, { folder: 'News' });
-                return result.secure_url;
+        let photosData = news.photos;
+        if (req.files['photos'] && req.files['photos'].length > 0) {
+            const photos = req.files['photos'];
+            photosData = await Promise.all(photos.map(async (photo) => {
+                const result = await cloudinary.uploader.upload(photo.path, { folder: 'News' });
+                return { url: result.secure_url, public_id: result.public_id };
             }));
-            // Update photos with the new ones
-            news.photos = photoUrls;
+
+            // If there were existing photos, delete them from Cloudinary
+            if (news.photos.length > 0) {
+                await Promise.all(news.photos.map(async (photo) => {
+                    await cloudinary.uploader.destroy(photo.public_id);
+                }));
+            }
         }
 
-        // Update news or event information
+        // Update news information
         news.title = title;
         news.status = status;
+        news.date = date;
+        news.thumbnail.url = thumbnailUrl;
+        news.thumbnail.public_id = thumbnailPublicId;
+        news.photos = photosData.map(photo => ({ url: photo.url, public_id: photo.public_id }));
         news.shortDescription = shortDescription;
         news.longDescription = longDescription;
 
-        // Save the updated news or event
         await news.save();
 
-        res.json(news);
+        res.json({ 
+            _id: news._id,
+            title: news.title,
+            status: news.status,
+            date: news.date,
+            thumbnailUrl: news.thumbnail.url,
+            photos: news.photos.map(photo => ({
+                url: photo.url,
+                public_id: photo.public_id
+            })),
+            shortDescription: news.shortDescription,
+            longDescription: news.longDescription
+        });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Internal Server Error" });

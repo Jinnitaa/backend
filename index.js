@@ -889,31 +889,28 @@ app.post("/admin/signup", async (req, res) => {
 app.post("/admin/login", async (req, res) => {
     const { username, password } = req.body;
     try {
-      const user = await AdminModel.findOne({ username });
-  
-      if (!user) {
-        return res.status(400).json({ msg: "User does not exist" });
-      }
-  
-      bcrypt.compare(password, user.password, (err, result) => {
-        if (err) {
-          return res.status(500).json({ error: "Failed to compare passwords" });
+        const user = await AdminModel.findOne({ username });
+
+        if (!user) {
+            return res.status(400).json({ msg: "User does not exist" });
         }
-        console.log(result);
-        if (result) {
-          const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-            expiresIn: "1h", // Token expires in 1 hour
-          });
-  
-          return res.status(200).json({ token, msg: "Login successful" });
+
+        const passwordMatch = await bcrypt.compare(password, user.password);
+
+        if (passwordMatch) {
+            const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+                expiresIn: "1h", // Token expires in 1 hour
+            });
+
+            return res.status(200).json({ token, msg: "Login successful" });
         } else {
-          return res.status(401).json({ msg: "Wrong pass" });
+            return res.status(401).json({ msg: "Wrong password" });
         }
-      });
     } catch (error) {
-      res.status(500).json({ error: "Failed to login user" });
+        console.error("Error during login:", error);
+        res.status(500).json({ error: "Failed to login user" });
     }
-  });
+});
   
 
 //////////////////////////////////Request Quote/////////////////////////////////////////

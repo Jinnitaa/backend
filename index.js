@@ -203,36 +203,38 @@ app.delete('/admin/employee/deleteUser/:id', (req, res) => {
 
 /////////////////////////////////////////////////////News and Event /////////////////////////////////////////////////
 
-app.post("/createNews", upload.array('photos'), async (req, res) => {
+pp.post("/createNews", upload.fields([{ name: 'thumbnail', maxCount: 1 }, { name: 'photos', maxCount: 10 }]), async (req, res) => {
     try {
-        const { title, status, shortDescription, longDescription, date } = req.body;
-
+        const { title, status, date, shortDescription, longDescription } = req.body;
+        
+        // Upload thumbnail to Cloudinary
+        const thumbnailResult = await cloudinary.uploader.upload(req.files['thumbnail'][0].path, { folder: 'News' });
+        const thumbnailUrl = thumbnailResult.secure_url;
+        const thumbnailPublicId = thumbnailResult.public_id;
+        
         // Upload photos to Cloudinary
-        const photoUrls = await Promise.all(req.files.map(async (file) => {
-            const result = await cloudinary.uploader.upload(file.path, { folder: 'News' });
-            return { url: result.secure_url, public_id: result.public_id }; // Include public_id
+        const photos = req.files['photos'];
+        const photosData = await Promise.all(photos.map(async (photo) => {
+            const result = await cloudinary.uploader.upload(photo.path, { folder: 'News' });
+            return { url: result.secure_url, public_id: result.public_id };
         }));
 
+        // Extract photo URLs and public IDs
+        const photosUrls = photosData.map(photo => photo.url);
+        const photosPublicIds = photosData.map(photo => photo.public_id);
+
         // Create news document with Cloudinary URLs and public IDs
-        const news = await NewsModel.create({
+        const news = await NewsModel.create({ 
             title,
+            thumbnail: { url: thumbnailUrl, public_id: thumbnailPublicId },
+            photos: photosUrls.map((url, index) => ({ url, public_id: photosPublicIds[index] })),
             status,
-            thumbnail: { url: photoUrls[0].url, public_id: photoUrls[0].public_id }, // Include public_id for thumbnail
-            photos: photoUrls, // Correctly assign photoUrls array to photos field
             shortDescription,
-            longDescription,
-            date // Already converted to Date object by front end
+            date,
+            longDescription 
         });
 
-        // Send the Cloudinary URLs and public IDs in the response
-        res.json({ 
-            title: news.title,
-            status: news.status,
-            thumbnail: news.thumbnail,
-            photos: news.photos,
-            shortDescription: news.shortDescription,
-            longDescription: news.longDescription
-        });
+        res.json(news);
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Internal Server Error" });

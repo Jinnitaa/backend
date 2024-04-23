@@ -242,20 +242,38 @@ app.post("/createNews", upload.fields([{ name: 'thumbnail', maxCount: 1 }, { nam
 });
 
 
-// Get Route for listing news and events data
-app.get('/admin/news', async (req, res) => {
+app.get("/getNews", async (req, res) => {
     try {
         // Fetch all news documents from the database
-        const news = await NewsModel.find({});
+        const news = await NewsModel.find({}).exec();
 
-        // Send the news as a JSON response
-        res.json(news);
+        // Map news to include Cloudinary URLs of the uploaded images
+        const newsWithUrls = news.map(item => {
+            return {
+                _id: item._id,
+                title: item.title,
+                status: item.status,
+                date: item.date,
+                thumbnailUrl: item.thumbnail.url,
+                thumbnailPublicId: item.thumbnail.public_id,
+                photos: item.photos.map(photo => ({
+                    url: photo.url,
+                    public_id: photo.public_id
+                })),
+                shortDescription: item.shortDescription,
+                longDescription: item.longDescription
+            };
+        });
+
+        // Send the news data with Cloudinary URLs as a JSON response
+        res.json(newsWithUrls);
     } catch (error) {
         // Handle errors
         console.error(error);
         res.status(500).json({ error: "Internal Server Error" });
     }
 });
+
 
 // Get Route for fetching a single news or event by ID
 app.get("/getNews/:id", async (req, res) => {
